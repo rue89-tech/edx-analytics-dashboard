@@ -395,6 +395,27 @@ table.dataTable thead th.sorting_desc:after {
   }
 }
 
+.table.course-overview {
+  th, td {
+    border-top: none;
+  }
+
+  th {
+    font-weight: normal;
+  }
+}
+
+.course-external-tools {
+  list-style: none;
+  padding: 0;
+
+  li {
+    padding: 8px 10px;
+  }
+
+  .ico { margin-right: 6px; }
+}
+
 .course-home-table-outer {
   header.heading-outer {
     display: table;
