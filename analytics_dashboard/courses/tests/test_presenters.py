@@ -56,13 +56,16 @@ class CourseEngagementActivityPresenterTests(SwitchMixin, TestCase):
                 'weekEnding': '2014-08-31',
                 AT.ANY: 1000,
                 AT.ATTEMPTED_PROBLEM: 0,
-                AT.PLAYED_VIDEO: 10000
+                AT.PLAYED_VIDEO: 10000,
+                'enrollment': 10000,
+                'active_percent': 1000. / 10000,
             }, {
                 'weekEnding': '2014-09-07',
                 AT.ANY: 100,
                 AT.ATTEMPTED_PROBLEM: 301,
                 AT.PLAYED_VIDEO: 1000,
-
+                'enrollment': 10007,
+                'active_percent': 100. / 10007,
             }
         ]
 
@@ -77,7 +80,9 @@ class CourseEngagementActivityPresenterTests(SwitchMixin, TestCase):
         trends[0].update({
             AT.ANY: 0,
             AT.ATTEMPTED_PROBLEM: 0,
-            AT.PLAYED_VIDEO: 0
+            AT.PLAYED_VIDEO: 0,
+            'enrollment': 10000,
+            'active_percent': 0.,
         })
 
         if include_forum_data:
@@ -100,20 +105,29 @@ class CourseEngagementActivityPresenterTests(SwitchMixin, TestCase):
         del expected_summary['created']
         del expected_summary['interval_end']
         del expected_summary['course_id']
+        expected_summary.update({
+            'attempted_problem_alt': "3%",
+            'posted_forum_alt': "--",
+            'played_video_alt': "10%",
+            'any_alt': "1%",
+        })
 
         if not include_forum_activity:
             del expected_summary[AT.POSTED_FORUM]
+            del expected_summary['posted_forum_alt']
 
         expected_summary['last_updated'] = utils.CREATED_DATETIME
 
         self.assertDictEqual(summary, expected_summary)
 
     @mock.patch('analyticsclient.course.Course.activity', mock.Mock(side_effect=utils.mock_course_activity))
+    @mock.patch('analyticsclient.course.Course.enrollment', mock.Mock(side_effect=utils.mock_course_enrollment))
     def test_get_summary_and_trend_data(self):
         self.assertSummaryAndTrendsValid(False, self.get_expected_trends(False))
         self.assertSummaryAndTrendsValid(True, self.get_expected_trends(True))
 
     @mock.patch('analyticsclient.course.Course.activity')
+    @mock.patch('analyticsclient.course.Course.enrollment', mock.Mock(side_effect=utils.mock_course_enrollment))
     def test_get_summary_and_trend_data_small(self, mock_activity):
         api_trend = [utils.mock_course_activity()[-1]]
         mock_activity.return_value = api_trend

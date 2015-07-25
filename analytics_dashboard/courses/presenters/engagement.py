@@ -84,6 +84,26 @@ class CourseEngagementActivityPresenter(BasePresenter):
 
         return summary
 
+    def _annotate_with_enrollment(self, summary, trends, enrollment_data):
+        """
+        Add weekly enrollment data to the summary and trends so we can display stats as a
+        percentage of the total enrollment at the time.
+        """
+        # Approximate the weekly enrollment using the last day of each week:
+        enrollment_by_day = {datum['date']: datum['count'] for datum in enrollment_data}
+        for week in trends:
+            week['enrollment'] = enrollment_by_day.get(week['weekEnding'])
+            if week['enrollment']:
+                week['active_percent'] = week.get('any', 0) / float(week['enrollment'])
+        most_recent = trends[-1]
+        summary_enrollment = enrollment_by_day.get(most_recent['weekEnding'])
+        if summary_enrollment:
+            for key in ('any', 'attempted_problem', 'posted_forum', 'played_video'):
+                if summary.get(key):
+                    summary[key + '_alt'] = "{:.0f}%".format(summary[key] * 100.0 / summary_enrollment)
+                elif key in summary:
+                    summary[key + '_alt'] = '--'
+
     def get_summary_and_trend_data(self):
         """
         Retrieve recent summary and all historical trend data.
@@ -93,6 +113,9 @@ class CourseEngagementActivityPresenter(BasePresenter):
         api_trends = self.course.activity(start_date=None, end_date=end_date)
         summary = self._build_summary(api_trends)
         trends = self._build_trend(api_trends)
+        if trends:
+            enrollment_data = self.course.enrollment(start_date=None, end_date=end_date)
+            self._annotate_with_enrollment(summary, trends, enrollment_data)
         return summary, trends
 
 
