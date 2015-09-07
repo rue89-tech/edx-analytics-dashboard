@@ -94,10 +94,18 @@ class CourseEngagementActivityPresenter(BasePresenter):
         """
         # Approximate the weekly enrollment using the last day of each week:
         enrollment_by_day = {datum['date']: datum['count'] for datum in enrollment_data}
+        has_enrollment_data = any(enrollment_by_day.get(week['weekEnding']) for week in trends)
+        if not has_enrollment_data:
+            return
         for week in trends:
             week['enrollment'] = enrollment_by_day.get(week['weekEnding'])
-            if week['enrollment']:
-                week['active_percent'] = week.get('any', 0) / float(week['enrollment'])
+            num_active = week.get('any', 0)
+            if num_active == 0:
+                week['active_percent'] = 0
+            elif week['enrollment']:
+                week['active_percent'] = num_active / float(week['enrollment'])
+            else:
+                week['active_percent'] = None  # Avoid dive-by-zero but add an entry for this column so it appears
         most_recent = trends[-1]
         summary_enrollment = enrollment_by_day.get(most_recent['weekEnding'])
         if summary_enrollment:

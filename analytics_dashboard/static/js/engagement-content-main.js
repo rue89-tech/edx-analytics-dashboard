@@ -89,7 +89,8 @@ require(['vendor/domReady!', 'load/init-page'], function (doc, page) {
             model: page.models.courseModel,
             modelAttribute: 'engagementTrends',
             columns: settings,
-            sorting: ['-weekEnding']
+            sorting: ['-weekEnding'],
+            replaceNull: '-'
         });
     });
 });
